@@ -679,18 +679,37 @@ body {
 }
 
 @media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
   .app {
-    padding: 20px;
+    padding: 15px;
   }
   
   .app-header h1 {
     font-size: 2rem;
   }
   
+  .expense-form,
+  .search-filter,
+  .inventory-list {
+    padding: 15px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
   .expense-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
+    padding: 12px;
+  }
+
+  .inventory-card {
+    padding: 12px;
   }
   
   .expense-amount {
