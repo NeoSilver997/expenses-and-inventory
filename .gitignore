@@ -28,3 +28,6 @@ Thumbs.db
 # Data storage
 data/
 *.db
+
+# Uploads
+server/uploads/
