@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Tesseract from 'tesseract.js';
 
 const API_BASE = '/api';
 
@@ -18,6 +19,9 @@ function App() {
   const [inventory, setInventory] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([{ name: '', quantity: 1, category: 'food' }]);
   const [showInventory, setShowInventory] = useState(false);
+  const [ocrProcessing, setOcrProcessing] = useState(false);
+  const [ocrResult, setOcrResult] = useState(null);
+  const [showOcrReview, setShowOcrReview] = useState(false);
 
   // Fetch expenses from API
   const fetchExpenses = async () => {
@@ -105,7 +109,154 @@ function App() {
         setSlipPreview(reader.result);
       };
       reader.readAsDataURL(file);
+      // Reset OCR results when a new file is selected
+      setOcrResult(null);
+      setShowOcrReview(false);
     }
+  };
+
+  // Extract data from receipt using OCR
+  const handleOcrExtraction = async () => {
+    if (!slipFile) {
+      alert('Please upload a receipt image first!');
+      return;
+    }
+
+    setOcrProcessing(true);
+    setOcrResult(null);
+
+    try {
+      const result = await Tesseract.recognize(
+        slipFile,
+        'eng',
+        {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+            }
+          }
+        }
+      );
+
+      const text = result.data.text;
+      console.log('OCR Text:', text);
+
+      // Parse the OCR text to extract meaningful data
+      const extracted = parseReceiptText(text);
+      setOcrResult(extracted);
+      setShowOcrReview(true);
+
+      // Auto-fill form with extracted data
+      if (extracted.amount) {
+        setFormData(prev => ({ ...prev, amount: extracted.amount }));
+      }
+      if (extracted.description) {
+        setFormData(prev => ({ ...prev, description: extracted.description }));
+      }
+      if (extracted.date) {
+        setFormData(prev => ({ ...prev, date: extracted.date }));
+      }
+      if (extracted.items && extracted.items.length > 0) {
+        setInventoryItems(extracted.items);
+      }
+
+    } catch (error) {
+      console.error('OCR Error:', error);
+      alert('Failed to extract data from the receipt. Please try again or enter manually.');
+    } finally {
+      setOcrProcessing(false);
+    }
+  };
+
+  // Parse receipt text to extract structured data
+  const parseReceiptText = (text) => {
+    const lines = text.split('\n').filter(line => line.trim());
+    const extracted = {
+      description: '',
+      amount: '',
+      date: '',
+      items: []
+    };
+
+    // Extract total amount (looking for patterns like $XX.XX, TOTAL $XX.XX, etc.)
+    const amountPatterns = [
+      /(?:total|amount|sum)[\s:]*\$?\s*(\d+\.?\d{0,2})/i,
+      /\$\s*(\d+\.\d{2})/,
+      /(\d+\.\d{2})\s*(?:total|amount)/i
+    ];
+
+    for (const pattern of amountPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        extracted.amount = match[1];
+        break;
+      }
+    }
+
+    // Extract date (looking for various date formats)
+    const datePatterns = [
+      /(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/,
+      /(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/,
+      /((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i
+    ];
+
+    for (const pattern of datePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        try {
+          const parsedDate = new Date(match[1]);
+          if (!isNaN(parsedDate)) {
+            extracted.date = parsedDate.toISOString().split('T')[0];
+            break;
+          }
+        } catch (e) {
+          console.log('Date parsing error:', e);
+        }
+      }
+    }
+
+    // Extract merchant/store name as description (usually first few lines)
+    const merchantLines = lines.slice(0, 3).filter(line => 
+      line.length > 3 && 
+      !line.match(/\d{10,}/) && // Not a phone number
+      !line.match(/address|street|rd|ave|blvd/i) // Not an address
+    );
+    if (merchantLines.length > 0) {
+      extracted.description = merchantLines[0].trim();
+    }
+
+    // Extract line items (looking for item name followed by price)
+    const itemPattern = /^([a-zA-Z\s]+?)\s+\$?(\d+\.\d{2})$/;
+    lines.forEach(line => {
+      const match = line.trim().match(itemPattern);
+      if (match && match[2] !== extracted.amount) {
+        extracted.items.push({
+          name: match[1].trim(),
+          quantity: 1,
+          category: 'food'
+        });
+      }
+    });
+
+    // If no items found, try simpler pattern
+    if (extracted.items.length === 0) {
+      lines.forEach(line => {
+        const simple = line.trim().match(/^([a-zA-Z][a-zA-Z\s]{2,})/);
+        if (simple && 
+            !line.match(/total|subtotal|tax|address|phone|thank/i) &&
+            line.length < 30) {
+          extracted.items.push({
+            name: simple[1].trim(),
+            quantity: 1,
+            category: 'food'
+          });
+        }
+      });
+      // Limit to first 5 items to avoid noise
+      extracted.items = extracted.items.slice(0, 5);
+    }
+
+    return extracted;
   };
 
   // Handle slip form submission with file upload
@@ -307,7 +458,7 @@ function App() {
       {/* Scan Slip Form */}
       <div className="expense-form slip-form">
         <h2>📸 Scan Slip to Import Expense</h2>
-        <p className="form-description">Upload a receipt/slip image and enter expense details</p>
+        <p className="form-description">Upload a receipt/slip image and use OCR to automatically extract expense details, or enter them manually</p>
         <form onSubmit={handleSlipSubmit}>
           <div className="form-group">
             <label htmlFor="slip-file">Upload Receipt/Slip Image</label>
@@ -324,6 +475,61 @@ function App() {
               </div>
             )}
           </div>
+
+          {slipFile && !ocrProcessing && !showOcrReview && (
+            <div className="ocr-action">
+              <button
+                type="button"
+                onClick={handleOcrExtraction}
+                className="btn btn-ocr"
+              >
+                🤖 Extract Data with OCR
+              </button>
+              <p className="ocr-hint">Click to automatically extract expense details from the receipt</p>
+            </div>
+          )}
+
+          {ocrProcessing && (
+            <div className="ocr-processing">
+              <div className="loader"></div>
+              <p>Processing receipt with OCR... This may take a few seconds.</p>
+            </div>
+          )}
+
+          {showOcrReview && ocrResult && (
+            <div className="ocr-review">
+              <h3>📋 OCR Results - Review & Edit</h3>
+              <div className="ocr-result-box">
+                <p className="ocr-info">The following data was extracted from your receipt. Please review and edit as needed:</p>
+                {ocrResult.description && (
+                  <div className="ocr-field">
+                    <strong>Description:</strong> {ocrResult.description}
+                  </div>
+                )}
+                {ocrResult.amount && (
+                  <div className="ocr-field">
+                    <strong>Amount:</strong> ${ocrResult.amount}
+                  </div>
+                )}
+                {ocrResult.date && (
+                  <div className="ocr-field">
+                    <strong>Date:</strong> {ocrResult.date}
+                  </div>
+                )}
+                {ocrResult.items && ocrResult.items.length > 0 && (
+                  <div className="ocr-field">
+                    <strong>Items found:</strong> {ocrResult.items.length} item(s)
+                    <ul className="ocr-items-list">
+                      {ocrResult.items.map((item, idx) => (
+                        <li key={idx}>{item.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p className="ocr-note">✏️ You can edit the fields below before submitting.</p>
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="slip-description">Description</label>
