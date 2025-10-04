@@ -13,6 +13,11 @@ function App() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [slipFile, setSlipFile] = useState(null);
+  const [slipPreview, setSlipPreview] = useState(null);
+  const [inventory, setInventory] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([{ name: '', quantity: 1, category: 'food' }]);
+  const [showInventory, setShowInventory] = useState(false);
 
   // Fetch expenses from API
   const fetchExpenses = async () => {
@@ -36,9 +41,21 @@ function App() {
     }
   };
 
+  // Fetch inventory items
+  const fetchInventory = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/inventory`);
+      const data = await response.json();
+      setInventory(data);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
     fetchStats();
+    fetchInventory();
   }, []);
 
   // Handle form input changes
@@ -74,6 +91,99 @@ function App() {
       }
     } catch (error) {
       console.error('Error adding expense:', error);
+    }
+  };
+
+  // Handle slip file selection
+  const handleSlipFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSlipFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSlipPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle slip form submission with file upload
+  const handleSlipSubmit = async (e) => {
+    e.preventDefault();
+    
+    const formDataWithFile = new FormData();
+    if (slipFile) {
+      formDataWithFile.append('slip', slipFile);
+    }
+    formDataWithFile.append('description', formData.description);
+    formDataWithFile.append('amount', formData.amount);
+    formDataWithFile.append('category', formData.category);
+    formDataWithFile.append('date', formData.date);
+    
+    // Add inventory items if any are filled
+    const validItems = inventoryItems.filter(item => item.name.trim() !== '');
+    if (validItems.length > 0) {
+      formDataWithFile.append('items', JSON.stringify(validItems));
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/slips/create-expense`, {
+        method: 'POST',
+        body: formDataWithFile
+      });
+
+      if (response.ok) {
+        setFormData({
+          description: '',
+          amount: '',
+          category: 'food',
+          date: new Date().toISOString().split('T')[0]
+        });
+        setSlipFile(null);
+        setSlipPreview(null);
+        setInventoryItems([{ name: '', quantity: 1, category: 'food' }]);
+        fetchExpenses();
+        fetchStats();
+        fetchInventory();
+      }
+    } catch (error) {
+      console.error('Error adding expense from slip:', error);
+    }
+  };
+
+  // Handle inventory item changes
+  const handleInventoryItemChange = (index, field, value) => {
+    const newItems = [...inventoryItems];
+    newItems[index][field] = value;
+    setInventoryItems(newItems);
+  };
+
+  // Add inventory item field
+  const addInventoryItem = () => {
+    setInventoryItems([...inventoryItems, { name: '', quantity: 1, category: 'food' }]);
+  };
+
+  // Remove inventory item field
+  const removeInventoryItem = (index) => {
+    if (inventoryItems.length > 1) {
+      const newItems = inventoryItems.filter((_, i) => i !== index);
+      setInventoryItems(newItems);
+    }
+  };
+
+  // Delete inventory item
+  const handleDeleteInventory = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE}/inventory/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchInventory();
+      }
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
     }
   };
 
@@ -194,6 +304,140 @@ function App() {
         </form>
       </div>
 
+      {/* Scan Slip Form */}
+      <div className="expense-form slip-form">
+        <h2>📸 Scan Slip to Import Expense</h2>
+        <p className="form-description">Upload a receipt/slip image and enter expense details</p>
+        <form onSubmit={handleSlipSubmit}>
+          <div className="form-group">
+            <label htmlFor="slip-file">Upload Receipt/Slip Image</label>
+            <input
+              type="file"
+              id="slip-file"
+              accept="image/*,application/pdf"
+              onChange={handleSlipFileChange}
+              className="file-input"
+            />
+            {slipPreview && (
+              <div className="slip-preview">
+                <img src={slipPreview} alt="Slip preview" />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="slip-description">Description</label>
+            <input
+              type="text"
+              id="slip-description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="What did you spend on?"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="slip-amount">Amount ($)</label>
+            <input
+              type="number"
+              id="slip-amount"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="slip-category">Category</label>
+            <select
+              id="slip-category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              required
+            >
+              <option value="food">Food & Dining</option>
+              <option value="transportation">Transportation</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="utilities">Utilities</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="shopping">Shopping</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="slip-date">Date</label>
+            <input
+              type="date"
+              id="slip-date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="inventory-section">
+            <h3>Add Items to Inventory (Optional)</h3>
+            {inventoryItems.map((item, index) => (
+              <div key={index} className="inventory-item-row">
+                <input
+                  type="text"
+                  placeholder="Item name"
+                  value={item.name}
+                  onChange={(e) => handleInventoryItemChange(index, 'name', e.target.value)}
+                  className="inventory-input"
+                />
+                <input
+                  type="number"
+                  placeholder="Qty"
+                  value={item.quantity}
+                  onChange={(e) => handleInventoryItemChange(index, 'quantity', e.target.value)}
+                  min="1"
+                  className="inventory-input-small"
+                />
+                <select
+                  value={item.category}
+                  onChange={(e) => handleInventoryItemChange(index, 'category', e.target.value)}
+                  className="inventory-select"
+                >
+                  <option value="food">Food</option>
+                  <option value="transportation">Transportation</option>
+                  <option value="entertainment">Entertainment</option>
+                  <option value="utilities">Utilities</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="shopping">Shopping</option>
+                  <option value="other">Other</option>
+                </select>
+                {inventoryItems.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeInventoryItem(index)}
+                    className="btn-remove"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={addInventoryItem} className="btn-add-item">
+              + Add Item
+            </button>
+          </div>
+
+          <button type="submit" className="btn">
+            Import from Slip
+          </button>
+        </form>
+      </div>
+
       {/* Search and Filter */}
       <div className="search-filter">
         <h2>Search & Filter Expenses</h2>
@@ -253,6 +497,9 @@ function App() {
                 <div className="expense-meta">
                   <span className="category-badge">{expense.category}</span>
                   <span>{new Date(expense.date).toLocaleDateString()}</span>
+                  {expense.slipImage && (
+                    <span className="slip-badge">📎 Has Receipt</span>
+                  )}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -268,6 +515,62 @@ function App() {
               </div>
             </div>
           ))
+        )}
+      </div>
+
+      {/* Inventory Section */}
+      <div className="inventory-list">
+        <div className="inventory-header">
+          <h2>📦 Inventory</h2>
+          <button 
+            onClick={() => setShowInventory(!showInventory)} 
+            className="btn-toggle"
+          >
+            {showInventory ? 'Hide' : 'Show'} Inventory
+          </button>
+        </div>
+        
+        {showInventory && (
+          <>
+            {inventory.length === 0 ? (
+              <div className="empty-state">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z"/>
+                </svg>
+                <p>No inventory items yet. Add items through slip scanning!</p>
+              </div>
+            ) : (
+              <div className="inventory-grid">
+                {inventory.map((item) => (
+                  <div key={item.id} className="inventory-card">
+                    <div className="inventory-card-header">
+                      <h3>{item.name}</h3>
+                      <button
+                        onClick={() => handleDeleteInventory(item.id)}
+                        className="btn-remove-small"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="inventory-card-body">
+                      <div className="inventory-detail">
+                        <span className="label">Quantity:</span>
+                        <span className="value">{item.quantity}</span>
+                      </div>
+                      <div className="inventory-detail">
+                        <span className="label">Category:</span>
+                        <span className="category-badge">{item.category}</span>
+                      </div>
+                      <div className="inventory-detail">
+                        <span className="label">Added:</span>
+                        <span className="value">{new Date(item.addedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

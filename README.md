@@ -5,6 +5,8 @@ A modern web application for tracking expenses and managing your financial recor
 ## Features
 
 - 💰 **Expense Tracking**: Add, view, and delete expenses
+- 📸 **Slip Scanning**: Upload receipt/slip images to import expenses
+- 📦 **Inventory Management**: Track items purchased and manage inventory
 - 📊 **Statistics Dashboard**: View total expenses, count, and averages
 - 🏷️ **Categories**: Organize expenses by categories (Food, Transportation, Entertainment, etc.)
 - 📅 **Date Tracking**: Record when expenses occurred
@@ -24,6 +26,7 @@ A modern web application for tracking expenses and managing your financial recor
 - **Express.js**: Web application framework
 - **CORS**: Cross-origin resource sharing
 - **Body Parser**: Request body parsing middleware
+- **Multer**: File upload handling middleware
 
 ## Getting Started
 
@@ -110,6 +113,57 @@ npm run preview
   }
   ```
 
+### Slips (Receipt Uploads)
+
+- `POST /api/slips/upload` - Upload a slip/receipt image
+  - Accepts multipart/form-data with a file field named `slip`
+  - Returns the uploaded file information
+- `POST /api/slips/create-expense` - Create expense from slip with optional inventory items
+  - Accepts multipart/form-data with:
+    - `slip` (file) - Receipt/slip image (optional)
+    - `description` (string) - Expense description
+    - `amount` (number) - Expense amount
+    - `category` (string) - Expense category
+    - `date` (string) - Expense date
+    - `items` (JSON string) - Array of inventory items to add
+  ```json
+  {
+    "expense": {
+      "id": 1,
+      "description": "Grocery Shopping",
+      "amount": 23.18,
+      "category": "food",
+      "date": "2025-10-04",
+      "slipImage": "/uploads/slip-1234567890.png"
+    },
+    "inventoryItems": [
+      {
+        "id": 1,
+        "name": "Milk",
+        "quantity": 1,
+        "category": "food",
+        "expenseId": 1
+      }
+    ]
+  }
+  ```
+
+### Inventory
+
+- `GET /api/inventory` - Get all inventory items
+- `GET /api/inventory/:id` - Get a specific inventory item
+- `POST /api/inventory` - Create a new inventory item
+  ```json
+  {
+    "name": "Milk",
+    "quantity": 2,
+    "category": "food",
+    "expenseId": 1
+  }
+  ```
+- `PUT /api/inventory/:id` - Update an inventory item
+- `DELETE /api/inventory/:id` - Delete an inventory item
+
 ## Project Structure
 
 ```
@@ -117,7 +171,8 @@ expenses-and-inventory/
 ├── public/
 │   └── index.html          # HTML template
 ├── server/
-│   └── index.js            # Express backend server
+│   ├── index.js            # Express backend server
+│   └── uploads/            # Uploaded receipt/slip images
 ├── src/
 │   ├── App.jsx             # Main React component
 │   ├── main.jsx            # React entry point
@@ -138,8 +193,21 @@ expenses-and-inventory/
 - Shopping
 - Other
 
+## How to Use Slip Scanning
+
+1. **Upload a Receipt**: In the "📸 Scan Slip to Import Expense" section, click on the file upload button to select a receipt/slip image (supports JPG, PNG, GIF, PDF)
+2. **Enter Expense Details**: Fill in the description, amount, category, and date from the receipt
+3. **Add Inventory Items** (Optional): Add individual items from the receipt to track your inventory
+   - Click "+ Add Item" to add more items
+   - Enter the item name, quantity, and category for each item
+4. **Import**: Click "Import from Slip" to create the expense and add inventory items
+5. **View Results**: 
+   - The expense will appear in "Recent Expenses" with a "📎 Has Receipt" badge
+   - Click "Show Inventory" to view all inventory items
+
 ## Future Enhancements
 
+- 🤖 OCR (Optical Character Recognition) to automatically extract data from receipts
 - 💾 Persistent database storage (SQLite, PostgreSQL)
 - 🔐 User authentication and authorization
 - 📈 Advanced charts and visualizations
@@ -147,6 +215,7 @@ expenses-and-inventory/
 - 💸 Budget planning and alerts
 - 📤 Export data (CSV, PDF)
 - 🌍 Multi-currency support
+- 🔔 Low inventory alerts
 
 ## Contributing
 
