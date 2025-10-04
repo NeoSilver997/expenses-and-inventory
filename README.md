@@ -5,7 +5,10 @@ A modern web application for tracking expenses and managing your financial recor
 ## Features
 
 - 💰 **Expense Tracking**: Add, view, and delete expenses
-- 📸 **Slip Scanning**: Upload receipt/slip images to import expenses
+- 📸 **Slip Scanning with OCR**: Upload receipt/slip images and automatically extract expense data
+- 🤖 **OCR Technology**: Powered by Tesseract.js with support for English and Traditional Chinese
+- ✂️ **Image Cropping**: Crop receipts to focus on relevant areas for better OCR accuracy
+- 🌏 **Multi-Language Support**: Recognize receipts in English, Traditional Chinese, or both
 - 📦 **Inventory Management**: Track items purchased and manage inventory
 - 📊 **Statistics Dashboard**: View total expenses, count, and averages
 - 🏷️ **Categories**: Organize expenses by categories (Food, Transportation, Entertainment, etc.)
@@ -193,21 +196,32 @@ expenses-and-inventory/
 - Shopping
 - Other
 
-## How to Use Slip Scanning
+## How to Use Slip Scanning with OCR
 
 1. **Upload a Receipt**: In the "📸 Scan Slip to Import Expense" section, click on the file upload button to select a receipt/slip image (supports JPG, PNG, GIF, PDF)
-2. **Enter Expense Details**: Fill in the description, amount, category, and date from the receipt
-3. **Add Inventory Items** (Optional): Add individual items from the receipt to track your inventory
+2. **Select OCR Language**: Choose the language for OCR recognition:
+   - **English Only**: For receipts in English
+   - **Traditional Chinese Only**: For receipts in Traditional Chinese (繁體中文)
+   - **English + Traditional Chinese**: For receipts with both languages (default)
+3. **Crop Image (Optional)**: Click "✂️ Crop Image" to select a specific area of the receipt for better OCR accuracy
+   - Drag the corners or edges to adjust the crop area
+   - Click "Done Cropping" when finished, or "Cancel Crop" to use the full image
+4. **Extract Data with OCR**: Click "🤖 Extract Data with OCR" to automatically extract:
+   - Receipt description/merchant name
+   - Total amount
+   - Date
+   - Individual items (if detected)
+5. **Review and Edit**: Review the extracted data and make any necessary corrections
+6. **Add Inventory Items** (Optional): Add or modify individual items from the receipt to track your inventory
    - Click "+ Add Item" to add more items
    - Enter the item name, quantity, and category for each item
-4. **Import**: Click "Import from Slip" to create the expense and add inventory items
-5. **View Results**: 
+7. **Import**: Click "Import from Slip" to create the expense and add inventory items
+8. **View Results**: 
    - The expense will appear in "Recent Expenses" with a "📎 Has Receipt" badge
    - Click "Show Inventory" to view all inventory items
 
 ## Future Enhancements
 
-- 🤖 OCR (Optical Character Recognition) to automatically extract data from receipts
 - 💾 Persistent database storage (SQLite, PostgreSQL)
 - 🔐 User authentication and authorization
 - 📈 Advanced charts and visualizations

@@ -20,6 +20,7 @@
     "multer": "^2.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-image-crop": "^11.0.10",
     "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
