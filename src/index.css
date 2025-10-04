@@ -62,6 +62,26 @@ body {
   font-size: 1.5rem;
 }
 
+.search-filter {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.search-filter h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.search-filter-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -239,5 +259,9 @@ body {
   
   .expense-amount {
     margin-right: 0;
+  }
+
+  .search-filter-controls {
+    grid-template-columns: 1fr;
   }
 }

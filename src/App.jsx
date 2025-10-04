@@ -11,6 +11,8 @@ function App() {
     category: 'food',
     date: new Date().toISOString().split('T')[0]
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
 
   // Fetch expenses from API
   const fetchExpenses = async () => {
@@ -90,6 +92,13 @@ function App() {
       console.error('Error deleting expense:', error);
     }
   };
+
+  // Filter expenses based on search term and category
+  const filteredExpenses = expenses.filter((expense) => {
+    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || expense.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="app">
@@ -185,10 +194,51 @@ function App() {
         </form>
       </div>
 
+      {/* Search and Filter */}
+      <div className="search-filter">
+        <h2>Search & Filter Expenses</h2>
+        <div className="search-filter-controls">
+          <div className="form-group">
+            <label htmlFor="search">Search by Description</label>
+            <input
+              type="text"
+              id="search"
+              placeholder="Search expenses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="filter">Filter by Category</label>
+            <select
+              id="filter"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              <option value="food">Food & Dining</option>
+              <option value="transportation">Transportation</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="utilities">Utilities</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="shopping">Shopping</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* Expenses List */}
       <div className="expenses-list">
         <h2>Recent Expenses</h2>
-        {expenses.length === 0 ? (
+        {filteredExpenses.length === 0 && expenses.length > 0 ? (
+          <div className="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            <p>No expenses match your search or filter criteria.</p>
+          </div>
+        ) : expenses.length === 0 ? (
           <div className="empty-state">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
@@ -196,7 +246,7 @@ function App() {
             <p>No expenses yet. Add your first expense above!</p>
           </div>
         ) : (
-          expenses.map((expense) => (
+          filteredExpenses.map((expense) => (
             <div key={expense.id} className="expense-item">
               <div className="expense-info">
                 <h3>{expense.description}</h3>

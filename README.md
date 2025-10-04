@@ -8,6 +8,7 @@ A modern web application for tracking expenses and managing your financial recor
 - 📊 **Statistics Dashboard**: View total expenses, count, and averages
 - 🏷️ **Categories**: Organize expenses by categories (Food, Transportation, Entertainment, etc.)
 - 📅 **Date Tracking**: Record when expenses occurred
+- 🔍 **Search & Filter**: Search expenses by description and filter by category
 - 🎨 **Modern UI**: Beautiful, responsive design with gradient styling
 - ⚡ **Fast**: Built with Vite for optimal performance
 
@@ -144,7 +145,6 @@ expenses-and-inventory/
 - 📈 Advanced charts and visualizations
 - 📱 Mobile app version
 - 💸 Budget planning and alerts
-- 🔍 Search and filter functionality
 - 📤 Export data (CSV, PDF)
 - 🌍 Multi-currency support
 
