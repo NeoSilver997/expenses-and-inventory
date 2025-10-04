@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 const API_BASE = '/api';
 
@@ -22,6 +24,11 @@ function App() {
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [showOcrReview, setShowOcrReview] = useState(false);
+  const [showCropTool, setShowCropTool] = useState(false);
+  const [crop, setCrop] = useState({ unit: '%', width: 90, aspect: undefined });
+  const [completedCrop, setCompletedCrop] = useState(null);
+  const [ocrLanguage, setOcrLanguage] = useState('eng+chi_tra');
+  const imgRef = useRef(null);
 
   // Fetch expenses from API
   const fetchExpenses = async () => {
@@ -112,7 +119,37 @@ function App() {
       // Reset OCR results when a new file is selected
       setOcrResult(null);
       setShowOcrReview(false);
+      setShowCropTool(false);
+      setCompletedCrop(null);
     }
+  };
+
+  // Function to get cropped image blob
+  const getCroppedImg = (image, crop) => {
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', 0.95);
+    });
   };
 
   // Extract data from receipt using OCR
@@ -124,11 +161,20 @@ function App() {
 
     setOcrProcessing(true);
     setOcrResult(null);
+    setShowCropTool(false);
 
     try {
+      let imageToProcess = slipFile;
+
+      // If user cropped the image, use the cropped version
+      if (completedCrop && imgRef.current) {
+        const croppedBlob = await getCroppedImg(imgRef.current, completedCrop);
+        imageToProcess = croppedBlob;
+      }
+
       const result = await Tesseract.recognize(
-        slipFile,
-        'eng',
+        imageToProcess,
+        ocrLanguage,
         {
           logger: (m) => {
             if (m.status === 'recognizing text') {
@@ -469,23 +515,85 @@ function App() {
               onChange={handleSlipFileChange}
               className="file-input"
             />
-            {slipPreview && (
+            {slipPreview && !showCropTool && (
               <div className="slip-preview">
                 <img src={slipPreview} alt="Slip preview" />
               </div>
             )}
           </div>
 
-          {slipFile && !ocrProcessing && !showOcrReview && (
-            <div className="ocr-action">
-              <button
-                type="button"
-                onClick={handleOcrExtraction}
-                className="btn btn-ocr"
+          {slipPreview && showCropTool && (
+            <div className="crop-container">
+              <h3>✂️ Crop Image (Optional)</h3>
+              <p className="crop-hint">Drag to select the area you want to OCR. This helps improve accuracy.</p>
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
               >
-                🤖 Extract Data with OCR
-              </button>
-              <p className="ocr-hint">Click to automatically extract expense details from the receipt</p>
+                <img
+                  ref={imgRef}
+                  src={slipPreview}
+                  alt="Crop preview"
+                  style={{ maxWidth: '100%' }}
+                />
+              </ReactCrop>
+              <div className="crop-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCropTool(false);
+                    setCompletedCrop(null);
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cancel Crop
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCropTool(false)}
+                  className="btn btn-primary"
+                >
+                  Done Cropping
+                </button>
+              </div>
+            </div>
+          )}
+
+          {slipFile && !ocrProcessing && !showOcrReview && !showCropTool && (
+            <div className="ocr-action">
+              <div className="ocr-controls">
+                <div className="form-group">
+                  <label htmlFor="ocr-language">OCR Language</label>
+                  <select
+                    id="ocr-language"
+                    value={ocrLanguage}
+                    onChange={(e) => setOcrLanguage(e.target.value)}
+                    className="language-select"
+                  >
+                    <option value="eng">English Only</option>
+                    <option value="chi_tra">Traditional Chinese Only</option>
+                    <option value="eng+chi_tra">English + Traditional Chinese</option>
+                  </select>
+                </div>
+              </div>
+              <div className="ocr-buttons">
+                <button
+                  type="button"
+                  onClick={() => setShowCropTool(true)}
+                  className="btn btn-crop"
+                >
+                  ✂️ Crop Image
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOcrExtraction}
+                  className="btn btn-ocr"
+                >
+                  🤖 Extract Data with OCR
+                </button>
+              </div>
+              <p className="ocr-hint">Optionally crop the image to focus on the receipt area, then extract expense details</p>
             </div>
           )}
 

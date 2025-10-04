@@ -594,6 +594,90 @@ body {
   font-weight: 500;
 }
 
+/* Crop Tool Styles */
+.crop-container {
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8f8ff 0%, #f0f0ff 100%);
+  border-radius: 12px;
+  border: 2px solid #667eea;
+}
+
+.crop-container h3 {
+  color: #2d3748;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.crop-hint {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-bottom: 15px;
+}
+
+.crop-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.btn-crop {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-size: 1rem;
+  padding: 12px 24px;
+}
+
+.btn-crop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+  color: #2d3748;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+}
+
+.ocr-controls {
+  margin-bottom: 15px;
+}
+
+.ocr-controls .form-group {
+  margin-bottom: 10px;
+}
+
+.language-select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.ocr-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 20px;
