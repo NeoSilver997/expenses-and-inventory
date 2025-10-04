@@ -473,6 +473,127 @@ body {
   font-weight: 500;
 }
 
+/* OCR Styles */
+.ocr-action {
+  text-align: center;
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe6f0 100%);
+  border-radius: 12px;
+  border: 2px dashed #667eea;
+}
+
+.btn-ocr {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  font-size: 1.1rem;
+  padding: 15px 30px;
+  margin-bottom: 10px;
+}
+
+.btn-ocr:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(240, 147, 251, 0.5);
+}
+
+.ocr-hint {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.ocr-processing {
+  text-align: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #e8f4ff 0%, #f0e8ff 100%);
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ocr-processing p {
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+.ocr-review {
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8ffe8 0%, #e8f8ff 100%);
+  border-radius: 12px;
+  border: 2px solid #48bb78;
+}
+
+.ocr-review h3 {
+  color: #2d3748;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.ocr-result-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ocr-info {
+  color: #4a5568;
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
+.ocr-field {
+  padding: 10px;
+  margin: 10px 0;
+  background: #f7fafc;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.ocr-field strong {
+  color: #2d3748;
+  display: inline-block;
+  min-width: 100px;
+}
+
+.ocr-items-list {
+  margin: 10px 0 0 20px;
+  padding-left: 20px;
+}
+
+.ocr-items-list li {
+  color: #4a5568;
+  padding: 4px 0;
+}
+
+.ocr-note {
+  margin-top: 15px;
+  padding: 12px;
+  background: #fef5e7;
+  border-radius: 6px;
+  color: #744210;
+  font-size: 0.9rem;
+  text-align: center;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 20px;
