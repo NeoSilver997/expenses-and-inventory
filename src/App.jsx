@@ -153,7 +153,7 @@ function App() {
   };
 
   // Extract data from receipt using OCR
-  const handleOcrExtraction = async () => {
+  const handleOcrExtraction = async (language = ocrLanguage) => {
     if (!slipFile) {
       alert('Please upload a receipt image first!');
       return;
@@ -174,7 +174,7 @@ function App() {
 
       const result = await Tesseract.recognize(
         imageToProcess,
-        ocrLanguage,
+        language,
         {
           logger: (m) => {
             if (m.status === 'recognizing text') {
@@ -587,7 +587,7 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleOcrExtraction}
+                  onClick={() => handleOcrExtraction(ocrLanguage)}
                   className="btn btn-ocr"
                 >
                   🤖 Extract Data with OCR
