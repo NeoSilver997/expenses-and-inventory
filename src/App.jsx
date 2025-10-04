@@ -25,7 +25,7 @@ function App() {
   const [ocrResult, setOcrResult] = useState(null);
   const [showOcrReview, setShowOcrReview] = useState(false);
   const [showCropTool, setShowCropTool] = useState(false);
-  const [crop, setCrop] = useState({ unit: '%', width: 90, aspect: undefined });
+  const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState(null);
   const [ocrLanguage, setOcrLanguage] = useState('eng+chi_tra');
   const imgRef = useRef(null);
