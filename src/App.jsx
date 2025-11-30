@@ -21,6 +21,8 @@ function App() {
   const [inventory, setInventory] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([{ name: '', quantity: 1, category: 'food' }]);
   const [showInventory, setShowInventory] = useState(false);
+  const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(true);
+  const [monthlyStats, setMonthlyStats] = useState({ monthly: [], predictions: {} });
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [showOcrReview, setShowOcrReview] = useState(false);
@@ -63,10 +65,22 @@ function App() {
     }
   };
 
+  // Fetch monthly statistics
+  const fetchMonthlyStats = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/expenses/stats/monthly`);
+      const data = await response.json();
+      setMonthlyStats(data);
+    } catch (error) {
+      console.error('Error fetching monthly stats:', error);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
     fetchStats();
     fetchInventory();
+    fetchMonthlyStats();
   }, []);
 
   // Handle form input changes
@@ -99,6 +113,7 @@ function App() {
         });
         fetchExpenses();
         fetchStats();
+        fetchMonthlyStats();
       }
     } catch (error) {
       console.error('Error adding expense:', error);
@@ -343,6 +358,7 @@ function App() {
         fetchExpenses();
         fetchStats();
         fetchInventory();
+        fetchMonthlyStats();
       }
     } catch (error) {
       console.error('Error adding expense from slip:', error);
@@ -394,6 +410,7 @@ function App() {
       if (response.ok) {
         fetchExpenses();
         fetchStats();
+        fetchMonthlyStats();
       }
     } catch (error) {
       console.error('Error deleting expense:', error);
@@ -406,6 +423,13 @@ function App() {
     const matchesCategory = filterCategory === 'all' || expense.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Format month-year string for display
+  const formatMonthYear = (monthKey) => {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(year, parseInt(month) - 1);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
 
   return (
     <div className="app">
@@ -430,6 +454,88 @@ function App() {
             ${stats.count > 0 ? (stats.total / stats.count).toFixed(2) : '0.00'}
           </div>
         </div>
+      </div>
+
+      {/* Monthly Analytics Section */}
+      <div className="monthly-analytics">
+        <div className="analytics-header">
+          <h2>📊 Monthly Analytics</h2>
+          <button 
+            onClick={() => setShowMonthlyAnalytics(!showMonthlyAnalytics)} 
+            className="btn-toggle"
+          >
+            {showMonthlyAnalytics ? 'Hide' : 'Show'} Analytics
+          </button>
+        </div>
+
+        {showMonthlyAnalytics && (
+          <>
+            {/* Predictions Section */}
+            {Object.keys(monthlyStats.predictions).length > 0 && (
+              <div className="predictions-section">
+                <h3>🔮 Next Month Predictions</h3>
+                <p className="prediction-description">Based on your spending patterns from the last 3 months</p>
+                <div className="predictions-grid">
+                  <div className="prediction-card prediction-total">
+                    <h4>Predicted Total</h4>
+                    <div className="prediction-value">${monthlyStats.predictions._total?.toFixed(2) || '0.00'}</div>
+                  </div>
+                  {Object.entries(monthlyStats.predictions)
+                    .filter(([key]) => key !== '_total')
+                    .map(([category, amount]) => (
+                      <div key={category} className="prediction-card">
+                        <h4>{category.charAt(0).toUpperCase() + category.slice(1)}</h4>
+                        <div className="prediction-value">${amount.toFixed(2)}</div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Monthly Breakdown */}
+            <div className="monthly-breakdown">
+              <h3>📅 Expenses by Month</h3>
+              {monthlyStats.monthly.length === 0 ? (
+                <div className="empty-state">
+                  <p>No expense data yet. Add some expenses to see monthly analytics!</p>
+                </div>
+              ) : (
+                monthlyStats.monthly.map((month) => (
+                  <div key={month.month} className="month-card">
+                    <div className="month-header">
+                      <h4>{formatMonthYear(month.month)}</h4>
+                      <div className="month-total">
+                        <span className="total-label">Total:</span>
+                        <span className="total-amount">${month.total.toFixed(2)}</span>
+                        <span className="expense-count">({month.count} expense{month.count !== 1 ? 's' : ''})</span>
+                      </div>
+                    </div>
+                    <div className="category-breakdown">
+                      {Object.entries(month.byCategory).map(([category, amount]) => {
+                        const percentage = (amount / month.total * 100).toFixed(1);
+                        return (
+                          <div key={category} className="category-item">
+                            <div className="category-info">
+                              <span className="category-badge">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                              <span className="category-amount">${amount.toFixed(2)}</span>
+                            </div>
+                            <div className="category-bar-container">
+                              <div 
+                                className="category-bar" 
+                                style={{ width: `${percentage}%` }}
+                              />
+                              <span className="category-percentage">{percentage}%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Add Expense Form */}

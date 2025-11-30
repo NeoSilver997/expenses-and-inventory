@@ -138,6 +138,59 @@ app.get('/api/expenses/stats/summary', (req, res) => {
   });
 });
 
+// Get monthly expenses by category statistics
+app.get('/api/expenses/stats/monthly', (req, res) => {
+  // Group expenses by month and category
+  const monthlyData = {};
+  
+  expenses.forEach(expense => {
+    const date = new Date(expense.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = {
+        month: monthKey,
+        total: 0,
+        count: 0,
+        byCategory: {}
+      };
+    }
+    
+    monthlyData[monthKey].total += expense.amount;
+    monthlyData[monthKey].count += 1;
+    monthlyData[monthKey].byCategory[expense.category] = 
+      (monthlyData[monthKey].byCategory[expense.category] || 0) + expense.amount;
+  });
+  
+  // Sort by month (most recent first)
+  const sortedMonths = Object.keys(monthlyData).sort().reverse();
+  const monthlyStats = sortedMonths.map(month => monthlyData[month]);
+  
+  // Calculate predictions based on available months (up to last 3 months)
+  const predictions = {};
+  if (monthlyStats.length >= 1) {
+    const recentMonths = monthlyStats.slice(0, 3);
+    const allCategories = new Set();
+    recentMonths.forEach(m => Object.keys(m.byCategory).forEach(c => allCategories.add(c)));
+    
+    allCategories.forEach(category => {
+      // Include zero values for months where the category wasn't used
+      const categoryTotals = recentMonths.map(m => m.byCategory[category] || 0);
+      const avg = categoryTotals.reduce((a, b) => a + b, 0) / categoryTotals.length;
+      predictions[category] = Math.round(avg * 100) / 100;
+    });
+    
+    // Total prediction
+    const totalPrediction = Object.values(predictions).reduce((a, b) => a + b, 0);
+    predictions._total = Math.round(totalPrediction * 100) / 100;
+  }
+  
+  res.json({
+    monthly: monthlyStats,
+    predictions
+  });
+});
+
 // Upload slip/receipt image
 app.post('/api/slips/upload', upload.single('slip'), (req, res) => {
   if (!req.file) {
