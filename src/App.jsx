@@ -516,7 +516,7 @@ function App() {
                         return (
                           <div key={category} className="category-item">
                             <div className="category-info">
-                              <span className="category-badge">{category}</span>
+                              <span className="category-badge">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
                               <span className="category-amount">${amount.toFixed(2)}</span>
                             </div>
                             <div className="category-bar-container">

@@ -166,7 +166,7 @@ app.get('/api/expenses/stats/monthly', (req, res) => {
   const sortedMonths = Object.keys(monthlyData).sort().reverse();
   const monthlyStats = sortedMonths.map(month => monthlyData[month]);
   
-  // Calculate predictions based on last 3 months average
+  // Calculate predictions based on available months (up to last 3 months)
   const predictions = {};
   if (monthlyStats.length >= 1) {
     const recentMonths = monthlyStats.slice(0, 3);
@@ -174,14 +174,10 @@ app.get('/api/expenses/stats/monthly', (req, res) => {
     recentMonths.forEach(m => Object.keys(m.byCategory).forEach(c => allCategories.add(c)));
     
     allCategories.forEach(category => {
-      const categoryTotals = recentMonths
-        .map(m => m.byCategory[category] || 0)
-        .filter(v => v > 0);
-      
-      if (categoryTotals.length > 0) {
-        const avg = categoryTotals.reduce((a, b) => a + b, 0) / categoryTotals.length;
-        predictions[category] = Math.round(avg * 100) / 100;
-      }
+      // Include zero values for months where the category wasn't used
+      const categoryTotals = recentMonths.map(m => m.byCategory[category] || 0);
+      const avg = categoryTotals.reduce((a, b) => a + b, 0) / categoryTotals.length;
+      predictions[category] = Math.round(avg * 100) / 100;
     });
     
     // Total prediction
