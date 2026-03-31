@@ -5,6 +5,133 @@ import 'react-image-crop/dist/ReactCrop.css';
 
 const API_BASE = '/api';
 
+// Category definitions following the Chinese household budget system
+const CATEGORY_GROUPS = [
+  {
+    id: 'income_giving',
+    label: 'Income & Giving',
+    labelZh: '收入與支出基礎',
+    emoji: '💰',
+    type: 'income',
+    categories: [
+      { value: 'salary', label: 'Salary Income', labelZh: '薪津收入' },
+      { value: 'business_profit', label: 'Business Profit', labelZh: '營業淨利' },
+      { value: 'part_time', label: 'Part-time Income', labelZh: '兼職收入' },
+      { value: 'other_income', label: 'Other Income', labelZh: '其他收入' },
+      { value: 'tithe', label: 'Tithe', labelZh: '十一奉獻' },
+      { value: 'taxes_giving', label: 'Taxes / Other Giving', labelZh: '捐獻、稅額' },
+    ],
+  },
+  {
+    id: 'housing',
+    label: 'Housing',
+    labelZh: '房屋',
+    emoji: '🏠',
+    type: 'expense',
+    categories: [
+      { value: 'housing', label: 'Housing', labelZh: '房屋（房租/房貸、修繕、保險、房產稅）' },
+    ],
+  },
+  {
+    id: 'food',
+    label: 'Food',
+    labelZh: '食物',
+    emoji: '🍽️',
+    type: 'expense',
+    categories: [
+      { value: 'food', label: 'Food', labelZh: '食物（雜貨、外食）' },
+    ],
+  },
+  {
+    id: 'transportation',
+    label: 'Transportation',
+    labelZh: '交通',
+    emoji: '🚗',
+    type: 'expense',
+    categories: [
+      { value: 'transportation', label: 'Transportation', labelZh: '交通（油費、大眾運輸、保養、牌照）' },
+    ],
+  },
+  {
+    id: 'insurance',
+    label: 'Insurance',
+    labelZh: '保險',
+    emoji: '🛡️',
+    type: 'expense',
+    categories: [
+      { value: 'insurance', label: 'Insurance', labelZh: '保險（壽險、健保、意外險）' },
+    ],
+  },
+  {
+    id: 'household',
+    label: 'Household',
+    labelZh: '家事/債務',
+    emoji: '🏡',
+    type: 'expense',
+    categories: [
+      { value: 'household', label: 'Household / Debt', labelZh: '家事（水電瓦斯、電話網路、家具、貸款）' },
+    ],
+  },
+  {
+    id: 'entertainment',
+    label: 'Entertainment',
+    labelZh: '娛樂休閒',
+    emoji: '🎭',
+    type: 'expense',
+    categories: [
+      { value: 'entertainment', label: 'Entertainment', labelZh: '娛樂（餐廳、旅遊、有線電視、家庭活動）' },
+    ],
+  },
+  {
+    id: 'clothing',
+    label: 'Clothing',
+    labelZh: '服裝',
+    emoji: '👗',
+    type: 'expense',
+    categories: [
+      { value: 'clothing', label: 'Clothing', labelZh: '服裝（新衣、乾洗、配件）' },
+    ],
+  },
+  {
+    id: 'savings',
+    label: 'Savings',
+    labelZh: '每月儲蓄',
+    emoji: '🏦',
+    type: 'expense',
+    categories: [
+      { value: 'savings', label: 'Savings', labelZh: '儲蓄（緊急備用金、長期投資）' },
+    ],
+  },
+  {
+    id: 'medical',
+    label: 'Medical',
+    labelZh: '醫藥',
+    emoji: '🏥',
+    type: 'expense',
+    categories: [
+      { value: 'medical', label: 'Medical', labelZh: '醫藥（看診、藥品、牙科、維他命）' },
+    ],
+  },
+  {
+    id: 'miscellaneous',
+    label: 'Miscellaneous',
+    labelZh: '什支',
+    emoji: '📦',
+    type: 'expense',
+    categories: [
+      { value: 'miscellaneous', label: 'Miscellaneous', labelZh: '什支（禮品、零用錢、學費、雜項）' },
+    ],
+  },
+];
+
+// Flat list of all categories for dropdowns
+const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap(g => g.categories);
+
+// Map from category value to its label
+const CATEGORY_LABEL = Object.fromEntries(
+  ALL_CATEGORIES.map(c => [c.value, `${c.label} ${c.labelZh}`])
+);
+
 function App() {
   const [expenses, setExpenses] = useState([]);
   const [stats, setStats] = useState({ total: 0, count: 0, byCategory: {} });
@@ -432,6 +559,53 @@ function App() {
         </div>
       </div>
 
+      {/* Category Summary */}
+      <div className="category-summary">
+        <h2>📊 Category Summary 分類彙總</h2>
+        {CATEGORY_GROUPS.map((group) => {
+          const groupTotal = group.categories.reduce(
+            (sum, cat) => sum + (stats.byCategory[cat.value] || 0),
+            0
+          );
+          const pct = stats.total > 0 ? (groupTotal / stats.total) * 100 : 0;
+          if (groupTotal === 0) return null;
+          return (
+            <div key={group.id} className={`summary-group summary-group--${group.type}`}>
+              <div className="summary-group-header">
+                <span className="summary-group-title">
+                  {group.emoji} {group.label} <span className="summary-group-zh">({group.labelZh})</span>
+                </span>
+                <span className="summary-group-amount">${groupTotal.toFixed(2)}</span>
+                <span className="summary-group-pct">{pct.toFixed(1)}%</span>
+              </div>
+              <div className="summary-bar-track">
+                <div
+                  className="summary-bar-fill"
+                  style={{ width: `${Math.min(pct, 100)}%` }}
+                />
+              </div>
+              {group.categories.length > 1 && (
+                <div className="summary-sub-categories">
+                  {group.categories.map((cat) => {
+                    const catAmt = stats.byCategory[cat.value] || 0;
+                    if (catAmt === 0) return null;
+                    return (
+                      <div key={cat.value} className="summary-sub-row">
+                        <span className="summary-sub-label">{cat.label} <span className="summary-sub-zh">{cat.labelZh}</span></span>
+                        <span className="summary-sub-amount">${catAmt.toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {stats.total === 0 && (
+          <p className="summary-empty">No data yet. Add expenses to see the summary.</p>
+        )}
+      </div>
+
       {/* Add Expense Form */}
       <div className="expense-form">
         <h2>Add New Expense</h2>
@@ -465,7 +639,7 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="category">Category</label>
+            <label htmlFor="category">Category 類別</label>
             <select
               id="category"
               name="category"
@@ -473,13 +647,15 @@ function App() {
               onChange={handleChange}
               required
             >
-              <option value="food">Food & Dining</option>
-              <option value="transportation">Transportation</option>
-              <option value="entertainment">Entertainment</option>
-              <option value="utilities">Utilities</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="shopping">Shopping</option>
-              <option value="other">Other</option>
+              {CATEGORY_GROUPS.map((group) => (
+                <optgroup key={group.id} label={`${group.emoji} ${group.label} (${group.labelZh})`}>
+                  {group.categories.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label} {cat.labelZh}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
 
@@ -668,7 +844,7 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="slip-category">Category</label>
+            <label htmlFor="slip-category">Category 類別</label>
             <select
               id="slip-category"
               name="category"
@@ -676,13 +852,15 @@ function App() {
               onChange={handleChange}
               required
             >
-              <option value="food">Food & Dining</option>
-              <option value="transportation">Transportation</option>
-              <option value="entertainment">Entertainment</option>
-              <option value="utilities">Utilities</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="shopping">Shopping</option>
-              <option value="other">Other</option>
+              {CATEGORY_GROUPS.map((group) => (
+                <optgroup key={group.id} label={`${group.emoji} ${group.label} (${group.labelZh})`}>
+                  {group.categories.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label} {cat.labelZh}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
 
@@ -722,13 +900,15 @@ function App() {
                   onChange={(e) => handleInventoryItemChange(index, 'category', e.target.value)}
                   className="inventory-select"
                 >
-                  <option value="food">Food</option>
-                  <option value="transportation">Transportation</option>
-                  <option value="entertainment">Entertainment</option>
-                  <option value="utilities">Utilities</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="shopping">Shopping</option>
-                  <option value="other">Other</option>
+                  {CATEGORY_GROUPS.map((group) => (
+                    <optgroup key={group.id} label={`${group.emoji} ${group.label}`}>
+                      {group.categories.map((cat) => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
                 {inventoryItems.length > 1 && (
                   <button
@@ -767,20 +947,22 @@ function App() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="filter">Filter by Category</label>
+            <label htmlFor="filter">Filter by Category 類別篩選</label>
             <select
               id="filter"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
             >
-              <option value="all">All Categories</option>
-              <option value="food">Food & Dining</option>
-              <option value="transportation">Transportation</option>
-              <option value="entertainment">Entertainment</option>
-              <option value="utilities">Utilities</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="shopping">Shopping</option>
-              <option value="other">Other</option>
+              <option value="all">All Categories 所有類別</option>
+              {CATEGORY_GROUPS.map((group) => (
+                <optgroup key={group.id} label={`${group.emoji} ${group.label} (${group.labelZh})`}>
+                  {group.categories.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label} {cat.labelZh}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
         </div>
@@ -809,7 +991,7 @@ function App() {
               <div className="expense-info">
                 <h3>{expense.description}</h3>
                 <div className="expense-meta">
-                  <span className="category-badge">{expense.category}</span>
+                  <span className="category-badge">{CATEGORY_LABEL[expense.category] || expense.category}</span>
                   <span>{new Date(expense.date).toLocaleDateString()}</span>
                   {expense.slipImage && (
                     <span className="slip-badge">📎 Has Receipt</span>

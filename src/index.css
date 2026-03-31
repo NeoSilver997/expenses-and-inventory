@@ -678,6 +678,132 @@ body {
   margin-bottom: 10px;
 }
 
+/* Category Summary Styles */
+.category-summary {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.category-summary h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.summary-empty {
+  color: #999;
+  text-align: center;
+  padding: 20px 0;
+  font-size: 1rem;
+}
+
+.summary-group {
+  background: white;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  border-left: 5px solid #667eea;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.summary-group--income {
+  border-left-color: #48bb78;
+}
+
+.summary-group--expense {
+  border-left-color: #667eea;
+}
+
+.summary-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.summary-group-title {
+  flex: 1;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #333;
+}
+
+.summary-group-zh {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.summary-group-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #667eea;
+  min-width: 90px;
+  text-align: right;
+}
+
+.summary-group--income .summary-group-amount {
+  color: #38a169;
+}
+
+.summary-group-pct {
+  font-size: 0.9rem;
+  color: #888;
+  min-width: 50px;
+  text-align: right;
+}
+
+.summary-bar-track {
+  height: 8px;
+  background: #e1e4e8;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.summary-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.summary-group--income .summary-bar-fill {
+  background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+}
+
+.summary-sub-categories {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid #e1e4e8;
+}
+
+.summary-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.88rem;
+  color: #555;
+}
+
+.summary-sub-label {
+  flex: 1;
+}
+
+.summary-sub-zh {
+  color: #999;
+  margin-left: 4px;
+}
+
+.summary-sub-amount {
+  font-weight: 600;
+  color: #667eea;
+}
+
 @media (max-width: 768px) {
   body {
     padding: 10px;
